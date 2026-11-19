@@ -2,10 +2,15 @@
 Video stream capture and synthetic office simulation engine.
 Provides frames from webcam, RTSP, video file, or a simulated office environment.
 """
+import os
 import time
 import math
 import random
 from typing import Optional, Tuple, List, Dict, Any
+
+# Ensure macOS AVFoundation authorization warning does not freeze secondary threads
+os.environ.setdefault("OPENCV_AVFOUNDATION_SKIP_AUTH", "1")
+
 import numpy as np
 import cv2
 
@@ -77,25 +82,48 @@ class VideoStreamHandler:
         else:
             # Try to open webcam or video file / RTSP
             try:
-                src_val = int(self.source) if self.source.isdigit() else self.source
-                self.cap = cv2.VideoCapture(src_val)
+                if self.source.isdigit():
+                    src_val = int(self.source)
+                    # On macOS prefer AVFOUNDATION backend explicitly
+                    self.cap = cv2.VideoCapture(src_val, cv2.CAP_AVFOUNDATION)
+                    if not self.cap.isOpened():
+                        self.cap = cv2.VideoCapture(src_val)
+                else:
+                    self.cap = cv2.VideoCapture(self.source)
+
+                if self.cap is None or not self.cap.isOpened():
+                    print(f"⚠️ Notice: Camera source '{self.source}' could not be accessed.")
+                    print("   If on macOS, ensure Camera permissions are granted to your Terminal/IDE.")
+                    print("   Falling back safely to Synthetic Simulation Mode.")
+                    self.is_synthetic = True
+                    self.cap = None
+                    self._init_source()
+                    return
+
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+                # Test read a frame to confirm authorization
+                ret, _ = self.cap.read()
+                if not ret:
+                    print(f"⚠️ Notice: Camera '{self.source}' opened but failed to capture frame (permission denied).")
+                    print("   Reverting to Synthetic Simulation Mode.")
+                    self.cap.release()
+                    self.cap = None
+                    self.is_synthetic = True
+                    self._init_source()
             except Exception as e:
                 print(f"Error opening camera source '{self.source}': {e}. Falling back to synthetic mode.")
                 self.is_synthetic = True
+                self.cap = None
                 self._init_source()
 
     def read_frame(self) -> Tuple[bool, Optional[np.ndarray], List[Dict[str, Any]]]:
         """
         Returns (success, frame, synthetic_ground_truth_if_any)
         """
-        if self.is_synthetic:
+        if self.is_synthetic or self.cap is None or not self.cap.isOpened():
             frame, gt_boxes = self._generate_synthetic_frame()
             return True, frame, gt_boxes
-
-        if self.cap is None or not self.cap.isOpened():
-            return False, None, []
 
         ret, frame = self.cap.read()
         if not ret:
@@ -104,7 +132,9 @@ class VideoStreamHandler:
                 self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
                 ret, frame = self.cap.read()
             if not ret:
-                return False, None, []
+                # If camera fails during read, gracefully fall back to synthetic
+                frame, gt_boxes = self._generate_synthetic_frame()
+                return True, frame, gt_boxes
 
         frame = cv2.resize(frame, (self.width, self.height))
         return True, frame, []
