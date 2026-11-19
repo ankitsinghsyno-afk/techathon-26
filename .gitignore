@@ -1,0 +1,7 @@
+venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.log
+yolov8n.pt
+.DS_Store

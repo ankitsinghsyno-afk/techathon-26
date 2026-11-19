@@ -1,0 +1,133 @@
+{
+  "floor_name": "Building 4 - Level 3 IT Operations",
+  "canvas_size": {
+    "width": 800,
+    "height": 600
+  },
+  "energy_settings": {
+    "currency_symbol": "₹",
+    "cost_per_kwh": 9.5,
+    "co2_kg_per_kwh": 0.82,
+    "default_debounce_seconds": 8
+  },
+  "zones": [
+    {
+      "id": "zone_alpha",
+      "name": "Frontend Team Bay",
+      "department": "Engineering",
+      "camera_polygon": [
+        [0.05, 0.10],
+        [0.45, 0.10],
+        [0.45, 0.48],
+        [0.05, 0.48]
+      ],
+      "floor_polygon": [
+        [40, 60],
+        [360, 60],
+        [360, 270],
+        [40, 270]
+      ],
+      "appliances": [
+        { "name": "Overhead LED Panel (4x)", "type": "light", "wattage": 240, "switch_id": "RELAY_LGT_BAY_A" },
+        { "name": "Task Ambient Lights", "type": "light", "wattage": 80, "switch_id": "RELAY_AMB_BAY_A" },
+        { "name": "Zone HVAC Air Duct", "type": "ac", "wattage": 900, "switch_id": "RELAY_AC_BAY_A" }
+      ],
+      "debounce_seconds": 8,
+      "color": "#3B82F6"
+    },
+    {
+      "id": "zone_beta",
+      "name": "Backend & Cloud Team Bay",
+      "department": "Engineering",
+      "camera_polygon": [
+        [0.55, 0.10],
+        [0.95, 0.10],
+        [0.95, 0.48],
+        [0.55, 0.48]
+      ],
+      "floor_polygon": [
+        [440, 60],
+        [760, 60],
+        [760, 270],
+        [440, 270]
+      ],
+      "appliances": [
+        { "name": "Overhead LED Panel (4x)", "type": "light", "wattage": 240, "switch_id": "RELAY_LGT_BAY_B" },
+        { "name": "Task Ambient Lights", "type": "light", "wattage": 80, "switch_id": "RELAY_AMB_BAY_B" },
+        { "name": "Zone HVAC Air Duct", "type": "ac", "wattage": 900, "switch_id": "RELAY_AC_BAY_B" }
+      ],
+      "debounce_seconds": 8,
+      "color": "#10B981"
+    },
+    {
+      "id": "zone_qa",
+      "name": "QA & DevOps Bay",
+      "department": "Quality Assurance",
+      "camera_polygon": [
+        [0.05, 0.52],
+        [0.45, 0.52],
+        [0.45, 0.92],
+        [0.05, 0.92]
+      ],
+      "floor_polygon": [
+        [40, 320],
+        [360, 320],
+        [360, 540],
+        [40, 540]
+      ],
+      "appliances": [
+        { "name": "Overhead LED Panel (4x)", "type": "light", "wattage": 240, "switch_id": "RELAY_LGT_BAY_QA" },
+        { "name": "Zone HVAC Air Duct", "type": "ac", "wattage": 850, "switch_id": "RELAY_AC_BAY_QA" }
+      ],
+      "debounce_seconds": 8,
+      "color": "#8B5CF6"
+    },
+    {
+      "id": "zone_conf",
+      "name": "Conference Room 3A",
+      "department": "Shared Facility",
+      "camera_polygon": [
+        [0.55, 0.52],
+        [0.76, 0.52],
+        [0.76, 0.92],
+        [0.55, 0.92]
+      ],
+      "floor_polygon": [
+        [440, 320],
+        [600, 320],
+        [600, 540],
+        [440, 540]
+      ],
+      "appliances": [
+        { "name": "Conference Downlights", "type": "light", "wattage": 160, "switch_id": "RELAY_LGT_CONF" },
+        { "name": "Split AC 1.5 Ton", "type": "ac", "wattage": 1400, "switch_id": "RELAY_AC_CONF" },
+        { "name": "Presentation TV & Display", "type": "display", "wattage": 120, "switch_id": "RELAY_DSP_CONF" }
+      ],
+      "debounce_seconds": 5,
+      "color": "#F59E0B"
+    },
+    {
+      "id": "zone_lounge",
+      "name": "Cafeteria & Lounge",
+      "department": "Common Area",
+      "camera_polygon": [
+        [0.78, 0.52],
+        [0.95, 0.52],
+        [0.95, 0.92],
+        [0.78, 0.92]
+      ],
+      "floor_polygon": [
+        [620, 320],
+        [760, 320],
+        [760, 540],
+        [620, 540]
+      ],
+      "appliances": [
+        { "name": "Pantry Ambient Lighting", "type": "light", "wattage": 150, "switch_id": "RELAY_LGT_PANTRY" },
+        { "name": "Coffee Machine Socket", "type": "socket", "wattage": 1000, "switch_id": "RELAY_SOK_COFFEE" }
+      ],
+      "debounce_seconds": 10,
+      "color": "#EC4899"
+    }
+  ]
+}
