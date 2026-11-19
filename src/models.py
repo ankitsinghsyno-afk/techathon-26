@@ -29,6 +29,7 @@ class Zone(BaseModel):
     camera_polygon: List[List[float]] = Field(..., description="Polygon [[x, y], ...] in camera space (0-1 normalized)")
     floor_polygon: List[List[float]] = Field(..., description="Polygon [[x, y], ...] in 2D floor plan space (pixels)")
     appliances: List[Appliance]
+    fixtures: List[Dict[str, Any]] = Field(default_factory=list, description="Physical light and HVAC fixture positions")
     debounce_seconds: float = 8.0
     color: str = "#3B82F6"
 

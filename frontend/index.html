@@ -65,7 +65,7 @@
     <div class="hidden md:flex items-center space-x-4 bg-slate-900/80 border border-slate-800 px-4 py-1.5 rounded-full">
       <div class="flex items-center space-x-2">
         <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping"></span>
-        <span class="text-xs font-medium text-slate-300" id="header-floor-name">Building 4 — Level 3 IT Floor</span>
+        <span class="text-xs font-medium text-slate-300" id="header-floor-name">6th Floor Operations Map</span>
       </div>
       <span class="text-slate-600">|</span>
       <div class="flex items-center space-x-1.5 text-xs text-slate-400">
@@ -76,6 +76,10 @@
 
     <!-- Right Connection Pill -->
     <div class="flex items-center space-x-3">
+      <button onclick="openBlueprintModal()" class="flex items-center space-x-1.5 text-xs bg-cyan-950/40 hover:bg-cyan-900/60 text-cyan-300 border border-cyan-800/50 px-3 py-1.5 rounded-lg transition shadow-sm">
+        <i data-lucide="file-image" class="w-3.5 h-3.5"></i>
+        <span>Floor Sketch</span>
+      </button>
       <div id="connection-pill" class="flex items-center space-x-1.5 text-xs px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
         <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
         <span id="connection-text">Telemetry Connected</span>
@@ -183,18 +187,21 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-        <button onclick="setScenario('only_team_a')" class="scenario-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-700/20 transition flex items-center space-x-1.5">
+        <button onclick="setScenario('only_bay_1')" class="scenario-btn px-3.5 py-1.5 rounded-xl text-xs font-medium bg-emerald-600 hover:bg-emerald-500 text-white shadow-md shadow-emerald-700/20 transition flex items-center space-x-1.5">
           <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
-          <span>Only Team A Working (Target)</span>
+          <span>Only Bay 1 Working (Team 1)</span>
         </button>
-        <button onclick="setScenario('only_team_b')" class="scenario-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
-          <span>Only Team B Working</span>
+        <button onclick="setScenario('only_bay_2')" class="scenario-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
+          <span>Only Bay 2 Working (Team 2)</span>
         </button>
-        <button onclick="setScenario('meeting_in_session')" class="scenario-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
-          <span>Meeting in Conf 3A</span>
+        <button onclick="setScenario('bays_1_and_3')" class="scenario-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
+          <span>Bays 1 & 3 Active</span>
+        </button>
+        <button onclick="setScenario('conference_meeting')" class="scenario-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
+          <span>Conf Room Meeting</span>
         </button>
         <button onclick="setScenario('all_occupied')" class="scenario-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
-          <span>Full Floor Occupied</span>
+          <span>All Bays Active</span>
         </button>
         <button onclick="setScenario('all_empty')" class="scenario-btn px-3 py-1.5 rounded-xl text-xs font-medium bg-rose-900/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/40 transition flex items-center space-x-1.5">
           <i data-lucide="moon" class="w-3.5 h-3.5"></i>
@@ -273,8 +280,8 @@
 
         <div class="p-4 flex-1 flex flex-col space-y-4">
           <!-- Floor Plan Visual Canvas -->
-          <div class="relative bg-[#090D18] rounded-xl border border-slate-800/80 overflow-hidden shadow-inner p-2 aspect-[4/3]">
-            <canvas id="floorCanvas" width="800" height="600" class="w-full h-full object-contain cursor-crosshair"></canvas>
+          <div class="relative bg-[#090D18] rounded-xl border border-slate-800/80 overflow-hidden shadow-inner p-2 aspect-[8/9]">
+            <canvas id="floorCanvas" width="800" height="900" class="w-full h-full object-contain cursor-crosshair"></canvas>
           </div>
 
           <!-- Zone State Cards -->
@@ -424,6 +431,28 @@
       <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
         <button onclick="closeSourceModal()" class="px-4 py-2 text-xs text-slate-400 hover:text-white rounded-lg">Cancel</button>
         <button onclick="applySourceChange()" class="px-4 py-2 text-xs bg-emerald-600 hover:bg-emerald-500 text-white font-medium rounded-lg transition">Apply Source</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Floor Blueprint Reference -->
+  <div id="blueprintModal" class="fixed inset-0 bg-black/85 backdrop-blur-md hidden items-center justify-center z-50 p-4">
+    <div class="bg-[#0F172A] border border-slate-800 rounded-2xl max-w-2xl w-full p-5 space-y-3 shadow-2xl flex flex-col max-h-[90vh]">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+        <div class="flex items-center space-x-2">
+          <i data-lucide="file-text" class="w-5 h-5 text-cyan-400"></i>
+          <h3 class="text-base font-bold text-white">6th Floor Original Blueprint & Legend</h3>
+        </div>
+        <button onclick="closeBlueprintModal()" class="text-slate-400 hover:text-white">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="text-xs text-slate-300 flex items-center justify-between bg-slate-900/80 px-3 py-1.5 rounded-lg border border-slate-800">
+        <span>Legend: <strong class="text-amber-300">□ → Light Fixture</strong> | <strong>HVAC AC</strong> Central Ducts | <strong>P1–P10</strong> Workstations</span>
+        <span class="text-cyan-400 font-mono text-[11px]">Camera: Bottom-Right</span>
+      </div>
+      <div class="flex-1 overflow-auto rounded-xl border border-slate-700 bg-black flex items-center justify-center p-2">
+        <img src="/public/floor_plan_sketch.jpg" alt="6th Floor Sketch" class="max-h-[65vh] w-auto object-contain rounded-lg shadow-lg">
       </div>
     </div>
   </div>
@@ -597,12 +626,7 @@
         ctx.stroke();
       }
 
-      // Draw Walkways / Corridors
-      ctx.fillStyle = '#0F172A';
-      ctx.fillRect(360, 0, 80, canvas.height); // vertical hallway
-      ctx.fillRect(0, 270, canvas.width, 50);  // horizontal hallway
-
-      // Draw Zones
+      // 1. Draw Zones (Cabins, Bays, Server Room, Manager Cabin, Conf Room)
       const zones = t.zones;
       for (const zid in zones) {
         const zone = zones[zid];
@@ -616,55 +640,214 @@
         }
         ctx.closePath();
 
-        if (zone.lights_state) {
-          // Zone is active (lights on)
-          ctx.fillStyle = 'rgba(16, 185, 129, 0.12)';
+        const isActive = zone.lights_state;
+        if (isActive) {
+          ctx.fillStyle = 'rgba(16, 185, 129, 0.08)';
           ctx.fill();
           ctx.strokeStyle = '#10B981';
           ctx.lineWidth = 2;
           ctx.stroke();
-
-          // Glowing badge inside
-          ctx.fillStyle = '#10B981';
-          ctx.font = 'bold 12px sans-serif';
-          ctx.fillText(`💡 LIGHTS ON (${zone.occupancy} active)`, poly[0][0] + 12, poly[0][1] + 40);
         } else {
-          // Zone is vacant (lights off)
-          ctx.fillStyle = 'rgba(30, 41, 59, 0.7)';
+          ctx.fillStyle = 'rgba(20, 27, 40, 0.75)';
           ctx.fill();
-          ctx.strokeStyle = '#475569';
+          ctx.strokeStyle = '#334155';
           ctx.lineWidth = 1.5;
           ctx.stroke();
-
-          ctx.fillStyle = '#94A3B8';
-          ctx.font = 'bold 12px sans-serif';
-          ctx.fillText('🌑 LIGHTS OFF (SAVING ENERGY)', poly[0][0] + 12, poly[0][1] + 40);
         }
 
         // Zone Name Header
-        ctx.fillStyle = '#F8FAFC';
-        ctx.font = 'bold 14px sans-serif';
-        ctx.fillText(zone.name, poly[0][0] + 12, poly[0][1] + 22);
+        ctx.fillStyle = isActive ? '#FFFFFF' : '#94A3B8';
+        ctx.font = 'bold 13px sans-serif';
+        ctx.fillText(zone.name, poly[0][0] + 12, poly[0][1] + 20);
 
-        // Department tag
-        ctx.fillStyle = '#64748B';
-        ctx.font = '11px sans-serif';
-        ctx.fillText(zone.department, poly[0][0] + 12, poly[0][1] + 58);
+        // Status pill
+        ctx.font = 'bold 10px sans-serif';
+        if (isActive) {
+          ctx.fillStyle = '#10B981';
+          ctx.fillText(`● LIGHTS & HVAC ACTIVE (${zone.occupancy} present)`, poly[0][0] + 12, poly[0][1] + 36);
+        } else {
+          ctx.fillStyle = '#64748B';
+          ctx.fillText(`○ STANDBY (0W - LIGHTS OFF)`, poly[0][0] + 12, poly[0][1] + 36);
+        }
+
+        // Draw physical light fixtures (□ -> Light) from user sketch
+        if (zone.fixtures && zone.fixtures.length > 0) {
+          zone.fixtures.forEach(fix => {
+            const fx = fix.x;
+            const fy = fix.y;
+
+            if (fix.type === 'light') {
+              // Physical square light fixture (□)
+              if (isActive) {
+                // Light glow halo
+                const grad = ctx.createRadialGradient(fx + 10, fy + 10, 2, fx + 10, fy + 10, 26);
+                grad.addColorStop(0, 'rgba(253, 224, 71, 0.7)');
+                grad.addColorStop(1, 'rgba(253, 224, 71, 0)');
+                ctx.fillStyle = grad;
+                ctx.beginPath();
+                ctx.arc(fx + 10, fy + 10, 26, 0, Math.PI * 2);
+                ctx.fill();
+
+                // Fixture box (□)
+                ctx.fillStyle = '#FEF08A';
+                ctx.fillRect(fx, fy, 20, 20);
+                ctx.strokeStyle = '#EAB308';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(fx, fy, 20, 20);
+
+                ctx.fillStyle = '#854D0E';
+                ctx.font = 'bold 9px sans-serif';
+                ctx.fillText('💡', fx + 3, fy + 14);
+              } else {
+                // Fixture box OFF
+                ctx.fillStyle = '#1E293B';
+                ctx.fillRect(fx, fy, 20, 20);
+                ctx.strokeStyle = '#475569';
+                ctx.lineWidth = 1;
+                ctx.strokeRect(fx, fy, 20, 20);
+
+                ctx.fillStyle = '#64748B';
+                ctx.font = '8px sans-serif';
+                ctx.fillText('OFF', fx + 2, fy + 13);
+              }
+            } else if (fix.type === 'hvac') {
+              // Central HVAC Duct Box
+              const hw = 120, hh = 26;
+              ctx.fillStyle = isActive ? 'rgba(6, 182, 212, 0.15)' : '#18202F';
+              ctx.fillRect(fx - hw/2, fy - hh/2, hw, hh);
+              ctx.strokeStyle = isActive ? '#06B6D4' : '#334155';
+              ctx.lineWidth = 1.5;
+              ctx.strokeRect(fx - hw/2, fy - hh/2, hw, hh);
+
+              ctx.fillStyle = isActive ? '#22D3EE' : '#64748B';
+              ctx.font = 'bold 10px monospace';
+              ctx.fillText(isActive ? '❄ HVAC AC ON' : '❄ HVAC OFF', fx - 40, fy + 4);
+            }
+          });
+        }
       }
 
-      // Draw Occupants on Floor Plan
+      // 2. Draw Desks in Workstation Bays (P1-P5 top row, P6-P10 bottom row)
+      const bayIds = ['bay_1', 'bay_2', 'bay_3', 'bay_4'];
+      const bayYOffsets = [155, 295, 435, 575];
+
+      bayIds.forEach((bid, bidx) => {
+        const by = bayYOffsets[bidx];
+        const isActive = zones[bid] ? zones[bid].lights_state : false;
+
+        // Top Row Desks: P1 to P5
+        for (let i = 0; i < 5; i++) {
+          const dx = 55 + i * 100;
+          const dy = by + 50;
+          ctx.fillStyle = isActive ? '#283548' : '#182230';
+          ctx.fillRect(dx, dy, 75, 24);
+          ctx.strokeStyle = isActive ? '#4B5E78' : '#2A3648';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(dx, dy, 75, 24);
+
+          // Desk label
+          ctx.fillStyle = isActive ? '#94A3B8' : '#475569';
+          ctx.font = '9px sans-serif';
+          ctx.fillText(`P${i+1}`, dx + 30, dy + 15);
+        }
+
+        // Bottom Row Desks: P6 to P10
+        for (let i = 0; i < 5; i++) {
+          const dx = 55 + i * 100;
+          const dy = by + 82;
+          ctx.fillStyle = isActive ? '#283548' : '#182230';
+          ctx.fillRect(dx, dy, 75, 24);
+          ctx.strokeStyle = isActive ? '#4B5E78' : '#2A3648';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(dx, dy, 75, 24);
+
+          ctx.fillStyle = isActive ? '#94A3B8' : '#475569';
+          ctx.font = '9px sans-serif';
+          ctx.fillText(`P${i+6}`, dx + 30, dy + 15);
+        }
+      });
+
+      // 3. Draw Entry Gate & Camera at Bottom Right
+      // Entry Gate
+      ctx.fillStyle = '#0F291E';
+      ctx.fillRect(620, 640, 140, 65);
+      ctx.strokeStyle = '#10B981';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(620, 640, 140, 65);
+      ctx.fillStyle = '#34D399';
+      ctx.font = 'bold 11px sans-serif';
+      ctx.fillText('ENTRY GATE', 650, 678);
+
+      // Camera Position (as drawn in circle at bottom-right)
+      const cx = 700, cy = 760;
+      // Radar beam cone
+      const coneGrad = ctx.createRadialGradient(cx, cy, 10, cx - 350, cy - 350, 650);
+      coneGrad.addColorStop(0, 'rgba(56, 189, 248, 0.25)');
+      coneGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+      ctx.fillStyle = coneGrad;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(40, 155);
+      ctx.lineTo(40, 690);
+      ctx.closePath();
+      ctx.fill();
+
+      // Camera cone boundary lines
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(40, 155);
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(40, 690);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Camera Circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+      ctx.fillStyle = '#0284C7';
+      ctx.fill();
+      ctx.strokeStyle = '#38BDF8';
+      ctx.lineWidth = 2.5;
+      ctx.stroke();
+
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = '12px sans-serif';
+      ctx.fillText('📷', cx - 7, cy + 4);
+
+      ctx.fillStyle = '#38BDF8';
+      ctx.font = 'bold 10px sans-serif';
+      ctx.fillText('CAMERA POSITION', cx - 45, cy + 32);
+
+      // 4. Draw Legend Box (Bottom Left: □ -> Light)
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.fillRect(45, 875, 260, 22);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(45, 875, 260, 22);
+
+      // Light legend square (□)
+      ctx.fillStyle = '#FEF08A';
+      ctx.fillRect(52, 879, 14, 14);
+      ctx.strokeStyle = '#EAB308';
+      ctx.strokeRect(52, 879, 14, 14);
+      ctx.fillStyle = '#CBD5E1';
+      ctx.font = '10px sans-serif';
+      ctx.fillText('□ → Light Fixture', 72, 890);
+
+      // 5. Draw Occupants on Floor Plan
       if (t.detections && t.detections.length > 0) {
         t.detections.forEach((person) => {
-          // Approximate position on 2D map from normalized camera feet
           const normX = person.feet_coord[0] > 1 ? person.feet_coord[0] / 800 : person.feet_coord[0];
-          const normY = person.feet_coord[1] > 1 ? person.feet_coord[1] / 600 : person.feet_coord[1];
+          const normY = person.feet_coord[1] > 1 ? person.feet_coord[1] / 900 : person.feet_coord[1];
           const mapX = normX * canvas.width;
           const mapY = normY * canvas.height;
 
           // Pulse glow ring
           ctx.beginPath();
           ctx.arc(mapX, mapY, 14, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(6, 182, 212, 0.25)';
+          ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
           ctx.fill();
 
           // Person dot
@@ -676,9 +859,9 @@
           ctx.lineWidth = 2;
           ctx.stroke();
 
-          // Tag
+          // Person label
           ctx.fillStyle = '#FFFFFF';
-          ctx.font = '10px monospace';
+          ctx.font = 'bold 10px monospace';
           ctx.fillText(`P${person.id}`, mapX + 10, mapY + 3);
         });
       }
@@ -819,6 +1002,15 @@
     function closeSourceModal() {
       document.getElementById('sourceModal').classList.add('hidden');
       document.getElementById('sourceModal').classList.remove('flex');
+    }
+
+    function openBlueprintModal() {
+      document.getElementById('blueprintModal').classList.remove('hidden');
+      document.getElementById('blueprintModal').classList.add('flex');
+    }
+    function closeBlueprintModal() {
+      document.getElementById('blueprintModal').classList.add('hidden');
+      document.getElementById('blueprintModal').classList.remove('flex');
     }
 
     async function applySourceChange() {

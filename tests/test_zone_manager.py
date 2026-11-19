@@ -19,43 +19,43 @@ def test_is_point_in_polygon():
 
 def test_zone_occupancy_and_debouncing():
     zm = ZoneManager("config/default_zones.json")
-    assert "zone_alpha" in zm.zones
-    assert "zone_beta" in zm.zones
+    assert "bay_1" in zm.zones
+    assert "bay_2" in zm.zones
 
     # Initially, all zones should be vacant and lights OFF
     summary = zm.get_summary()
-    assert summary["zone_alpha"]["is_occupied"] is False
-    assert summary["zone_alpha"]["lights_state"] is False
+    assert summary["bay_1"]["is_occupied"] is False
+    assert summary["bay_1"]["lights_state"] is False
 
-    # Simulate detecting a person inside zone_alpha
-    # zone_alpha camera polygon is [0.05, 0.10] to [0.45, 0.48]
+    # Simulate detecting a person inside bay_1
+    # bay_1 camera polygon is [0.05, 0.16] to [0.72, 0.28]
     person1 = PersonDetection(
         id=1,
         confidence=0.92,
         bbox=[100, 100, 200, 250],
-        feet_coord=(0.20, 0.30)  # normalized coords inside zone_alpha
+        feet_coord=(0.20, 0.20)  # normalized coords inside bay_1
     )
 
     events = zm.update_occupancy([person1], frame_width=1, frame_height=1)
     assert len(events) > 0
-    # Zone alpha should switch ON
-    alpha_events = [e for e in events if e["zone_id"] == "zone_alpha"]
-    assert len(alpha_events) == 1
-    assert alpha_events[0]["action"] == "ON"
-    assert zm.zones["zone_alpha"].lights_state is True
-    assert zm.zones["zone_alpha"].current_occupancy == 1
+    # Bay 1 should switch ON
+    b1_events = [e for e in events if e["zone_id"] == "bay_1"]
+    assert len(b1_events) == 1
+    assert b1_events[0]["action"] == "ON"
+    assert zm.zones["bay_1"].lights_state is True
+    assert zm.zones["bay_1"].current_occupancy == 1
 
     # In the next frame, person leaves (0 detections)
     # Since debounce is 8s, lights should STAY ON
     events_empty = zm.update_occupancy([], frame_width=1, frame_height=1)
-    assert zm.zones["zone_alpha"].current_occupancy == 0
-    assert zm.zones["zone_alpha"].lights_state is True  # still held ON due to debounce
+    assert zm.zones["bay_1"].current_occupancy == 0
+    assert zm.zones["bay_1"].lights_state is True  # still held ON due to debounce
 
     # Now artificially advance timestamp past debounce threshold (e.g. 10s)
-    zm.zones["zone_alpha"].last_occupied_timestamp -= 10.0
+    zm.zones["bay_1"].last_occupied_timestamp -= 10.0
     events_timeout = zm.update_occupancy([], frame_width=1, frame_height=1)
 
-    alpha_off = [e for e in events_timeout if e["zone_id"] == "zone_alpha"]
-    assert len(alpha_off) == 1
-    assert alpha_off[0]["action"] == "OFF"
-    assert zm.zones["zone_alpha"].lights_state is False
+    b1_off = [e for e in events_timeout if e["zone_id"] == "bay_1"]
+    assert len(b1_off) == 1
+    assert b1_off[0]["action"] == "OFF"
+    assert zm.zones["bay_1"].lights_state is False

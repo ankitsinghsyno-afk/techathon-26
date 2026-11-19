@@ -18,7 +18,9 @@ app = FastAPI(title="Smart Office AI Energy Management System", version="1.0.0")
 
 # Mount frontend directory for static assets
 FRONTEND_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend"))
-os.makedirs(os.path.join(FRONTEND_DIR, "public"), exist_ok=True)
+PUBLIC_DIR = os.path.join(FRONTEND_DIR, "public")
+os.makedirs(PUBLIC_DIR, exist_ok=True)
+app.mount("/public", StaticFiles(directory=PUBLIC_DIR), name="public")
 
 # Initialize pipeline with synthetic mode by default for zero-setup demonstration
 pipeline = FloorEnergyPipeline(config_path="config/default_zones.json", source="synthetic")
@@ -108,7 +110,10 @@ def trigger_scenario(req: ScenarioRequest):
     - meeting_in_session
     - all_occupied
     """
-    valid = ["only_team_a", "only_team_b", "all_empty", "meeting_in_session", "all_occupied"]
+    valid = [
+        "only_bay_1", "only_bay_2", "bays_1_and_3", "conference_meeting",
+        "all_occupied", "all_empty", "only_team_a", "only_team_b", "meeting_in_session"
+    ]
     if req.scenario not in valid:
         raise HTTPException(status_code=400, detail=f"Invalid scenario. Choose from {valid}")
 

@@ -1,8 +1,14 @@
 {
-  "floor_name": "Building 4 - Level 3 IT Operations",
+  "floor_name": "6th Floor Operations Map",
   "canvas_size": {
     "width": 800,
-    "height": 600
+    "height": 900
+  },
+  "camera_setup": {
+    "position": "Bottom-Right (near Entry Gate & Conference Room)",
+    "coordinates": [700, 750],
+    "fov_angle_deg": 65,
+    "orientation_deg": -135
   },
   "energy_settings": {
     "currency_symbol": "₹",
@@ -12,122 +18,302 @@
   },
   "zones": [
     {
-      "id": "zone_alpha",
-      "name": "Frontend Team Bay",
-      "department": "Engineering",
+      "id": "bay_1",
+      "name": "Workstation Bay 1 (P1-P10)",
+      "department": "Engineering Team 1",
+      "type": "camera_monitored",
+      "capacity": 10,
       "camera_polygon": [
-        [0.05, 0.10],
-        [0.45, 0.10],
-        [0.45, 0.48],
-        [0.05, 0.48]
+        [0.05, 0.16],
+        [0.72, 0.16],
+        [0.72, 0.28],
+        [0.05, 0.28]
       ],
       "floor_polygon": [
-        [40, 60],
-        [360, 60],
-        [360, 270],
+        [40, 155],
+        [570, 155],
+        [570, 270],
         [40, 270]
       ],
+      "fixtures": [
+        { "id": "LGT_B1_1", "type": "light", "x": 130, "y": 250, "label": "L1" },
+        { "id": "LGT_B1_2", "type": "light", "x": 460, "y": 235, "label": "L2" },
+        { "id": "HVAC_B1", "type": "hvac", "x": 300, "y": 180, "label": "HVAC AC" }
+      ],
       "appliances": [
-        { "name": "Overhead LED Panel (4x)", "type": "light", "wattage": 240, "switch_id": "RELAY_LGT_BAY_A" },
-        { "name": "Task Ambient Lights", "type": "light", "wattage": 80, "switch_id": "RELAY_AMB_BAY_A" },
-        { "name": "Zone HVAC Air Duct", "type": "ac", "wattage": 900, "switch_id": "RELAY_AC_BAY_A" }
+        { "name": "Bay 1 Light Fixtures (2x)", "type": "light", "wattage": 280, "switch_id": "RELAY_LGT_BAY_1" },
+        { "name": "Bay 1 Central HVAC AC", "type": "ac", "wattage": 900, "switch_id": "RELAY_AC_BAY_1" }
       ],
       "debounce_seconds": 8,
       "color": "#3B82F6"
     },
     {
-      "id": "zone_beta",
-      "name": "Backend & Cloud Team Bay",
-      "department": "Engineering",
+      "id": "bay_2",
+      "name": "Workstation Bay 2 (P1-P10)",
+      "department": "Engineering Team 2",
+      "type": "camera_monitored",
+      "capacity": 10,
       "camera_polygon": [
-        [0.55, 0.10],
-        [0.95, 0.10],
-        [0.95, 0.48],
-        [0.55, 0.48]
+        [0.05, 0.30],
+        [0.72, 0.30],
+        [0.72, 0.43],
+        [0.05, 0.43]
       ],
       "floor_polygon": [
-        [440, 60],
-        [760, 60],
-        [760, 270],
-        [440, 270]
+        [40, 295],
+        [570, 295],
+        [570, 410],
+        [40, 410]
+      ],
+      "fixtures": [
+        { "id": "LGT_B2_1", "type": "light", "x": 130, "y": 305, "label": "L1" },
+        { "id": "LGT_B2_2", "type": "light", "x": 130, "y": 395, "label": "L2" },
+        { "id": "LGT_B2_3", "type": "light", "x": 460, "y": 395, "label": "L3" },
+        { "id": "LGT_B2_4", "type": "light", "x": 530, "y": 395, "label": "L4" },
+        { "id": "HVAC_B2", "type": "hvac", "x": 300, "y": 380, "label": "HVAC AC" }
       ],
       "appliances": [
-        { "name": "Overhead LED Panel (4x)", "type": "light", "wattage": 240, "switch_id": "RELAY_LGT_BAY_B" },
-        { "name": "Task Ambient Lights", "type": "light", "wattage": 80, "switch_id": "RELAY_AMB_BAY_B" },
-        { "name": "Zone HVAC Air Duct", "type": "ac", "wattage": 900, "switch_id": "RELAY_AC_BAY_B" }
+        { "name": "Bay 2 Light Fixtures (4x)", "type": "light", "wattage": 360, "switch_id": "RELAY_LGT_BAY_2" },
+        { "name": "Bay 2 Central HVAC AC", "type": "ac", "wattage": 900, "switch_id": "RELAY_AC_BAY_2" }
       ],
       "debounce_seconds": 8,
       "color": "#10B981"
     },
     {
-      "id": "zone_qa",
-      "name": "QA & DevOps Bay",
-      "department": "Quality Assurance",
+      "id": "bay_3",
+      "name": "Workstation Bay 3 (P1-P10)",
+      "department": "Product & Design Bay",
+      "type": "camera_monitored",
+      "capacity": 10,
       "camera_polygon": [
-        [0.05, 0.52],
-        [0.45, 0.52],
-        [0.45, 0.92],
-        [0.05, 0.92]
+        [0.05, 0.45],
+        [0.72, 0.45],
+        [0.72, 0.58],
+        [0.05, 0.58]
       ],
       "floor_polygon": [
-        [40, 320],
-        [360, 320],
-        [360, 540],
-        [40, 540]
+        [40, 435],
+        [570, 435],
+        [570, 550],
+        [40, 550]
+      ],
+      "fixtures": [
+        { "id": "LGT_B3_1", "type": "light", "x": 130, "y": 450, "label": "L1" },
+        { "id": "LGT_B3_2", "type": "light", "x": 460, "y": 450, "label": "L2" },
+        { "id": "HVAC_B3", "type": "hvac", "x": 300, "y": 520, "label": "HVAC AC" }
       ],
       "appliances": [
-        { "name": "Overhead LED Panel (4x)", "type": "light", "wattage": 240, "switch_id": "RELAY_LGT_BAY_QA" },
-        { "name": "Zone HVAC Air Duct", "type": "ac", "wattage": 850, "switch_id": "RELAY_AC_BAY_QA" }
+        { "name": "Bay 3 Light Fixtures (2x)", "type": "light", "wattage": 280, "switch_id": "RELAY_LGT_BAY_3" },
+        { "name": "Bay 3 Central HVAC AC", "type": "ac", "wattage": 900, "switch_id": "RELAY_AC_BAY_3" }
       ],
       "debounce_seconds": 8,
       "color": "#8B5CF6"
     },
     {
-      "id": "zone_conf",
-      "name": "Conference Room 3A",
-      "department": "Shared Facility",
+      "id": "bay_4",
+      "name": "Workstation Bay 4 (P1-P10)",
+      "department": "QA & Operations Bay",
+      "type": "camera_monitored",
+      "capacity": 10,
       "camera_polygon": [
-        [0.55, 0.52],
-        [0.76, 0.52],
-        [0.76, 0.92],
-        [0.55, 0.92]
+        [0.05, 0.60],
+        [0.72, 0.60],
+        [0.72, 0.74],
+        [0.05, 0.74]
       ],
       "floor_polygon": [
-        [440, 320],
-        [600, 320],
-        [600, 540],
-        [440, 540]
+        [40, 575],
+        [570, 575],
+        [570, 690],
+        [40, 690]
+      ],
+      "fixtures": [
+        { "id": "LGT_B4_1", "type": "light", "x": 130, "y": 590, "label": "L1" },
+        { "id": "LGT_B4_2", "type": "light", "x": 480, "y": 590, "label": "L2" },
+        { "id": "LGT_B4_3", "type": "light", "x": 160, "y": 680, "label": "L3" },
+        { "id": "LGT_B4_4", "type": "light", "x": 440, "y": 680, "label": "L4" },
+        { "id": "HVAC_B4", "type": "hvac", "x": 310, "y": 585, "label": "HVAC AC" }
       ],
       "appliances": [
-        { "name": "Conference Downlights", "type": "light", "wattage": 160, "switch_id": "RELAY_LGT_CONF" },
-        { "name": "Split AC 1.5 Ton", "type": "ac", "wattage": 1400, "switch_id": "RELAY_AC_CONF" },
-        { "name": "Presentation TV & Display", "type": "display", "wattage": 120, "switch_id": "RELAY_DSP_CONF" }
+        { "name": "Bay 4 Light Fixtures (4x)", "type": "light", "wattage": 360, "switch_id": "RELAY_LGT_BAY_4" },
+        { "name": "Bay 4 Central HVAC AC", "type": "ac", "wattage": 900, "switch_id": "RELAY_AC_BAY_4" }
+      ],
+      "debounce_seconds": 8,
+      "color": "#EC4899"
+    },
+    {
+      "id": "conf_room",
+      "name": "Conference Room",
+      "department": "Shared Facility",
+      "type": "iot_sensor_monitored",
+      "sensor_type": "PIR Presence Sensor (No Camera for Privacy)",
+      "capacity": 16,
+      "camera_polygon": [
+        [0.05, 0.78],
+        [0.78, 0.78],
+        [0.78, 0.96],
+        [0.05, 0.96]
+      ],
+      "floor_polygon": [
+        [40, 720],
+        [640, 720],
+        [640, 870],
+        [40, 870]
+      ],
+      "fixtures": [
+        { "id": "LGT_CONF_1", "type": "light", "x": 200, "y": 790, "label": "Downlights" },
+        { "id": "TV_CONF", "type": "display", "x": 60, "y": 800, "label": "Display TV" },
+        { "id": "AC_CONF", "type": "hvac", "x": 580, "y": 790, "label": "Split AC" }
+      ],
+      "appliances": [
+        { "name": "Conference Downlights", "type": "light", "wattage": 200, "switch_id": "RELAY_LGT_CONF" },
+        { "name": "Split AC 2.0 Ton", "type": "ac", "wattage": 1800, "switch_id": "RELAY_AC_CONF" },
+        { "name": "Conference Display & TV", "type": "display", "wattage": 140, "switch_id": "RELAY_TV_CONF" }
       ],
       "debounce_seconds": 5,
       "color": "#F59E0B"
     },
     {
-      "id": "zone_lounge",
-      "name": "Cafeteria & Lounge",
-      "department": "Common Area",
+      "id": "manager_cabin",
+      "name": "Manager Cabin",
+      "department": "Leadership",
+      "type": "iot_sensor_monitored",
+      "sensor_type": "PIR Presence Sensor (No Camera for Privacy)",
+      "capacity": 2,
       "camera_polygon": [
-        [0.78, 0.52],
-        [0.95, 0.52],
-        [0.95, 0.92],
-        [0.78, 0.92]
+        [0.76, 0.32],
+        [0.96, 0.32],
+        [0.96, 0.44],
+        [0.76, 0.44]
       ],
       "floor_polygon": [
-        [620, 320],
-        [760, 320],
-        [760, 540],
-        [620, 540]
+        [590, 280],
+        [760, 280],
+        [760, 390],
+        [590, 390]
+      ],
+      "fixtures": [
+        { "id": "LGT_MGR", "type": "light", "x": 675, "y": 330, "label": "Cabin Light" }
       ],
       "appliances": [
-        { "name": "Pantry Ambient Lighting", "type": "light", "wattage": 150, "switch_id": "RELAY_LGT_PANTRY" },
-        { "name": "Coffee Machine Socket", "type": "socket", "wattage": 1000, "switch_id": "RELAY_SOK_COFFEE" }
+        { "name": "Manager Cabin Light", "type": "light", "wattage": 120, "switch_id": "RELAY_LGT_MGR" },
+        { "name": "Manager Cabin Split AC", "type": "ac", "wattage": 1200, "switch_id": "RELAY_AC_MGR" }
       ],
       "debounce_seconds": 10,
-      "color": "#EC4899"
+      "color": "#06B6D4"
+    },
+    {
+      "id": "cabin_1",
+      "name": "Cabin 1",
+      "department": "Executive Suite",
+      "type": "camera_or_sensor",
+      "capacity": 2,
+      "camera_polygon": [
+        [0.05, 0.03],
+        [0.33, 0.03],
+        [0.33, 0.14],
+        [0.05, 0.14]
+      ],
+      "floor_polygon": [
+        [40, 30],
+        [260, 30],
+        [260, 135],
+        [40, 135]
+      ],
+      "fixtures": [
+        { "id": "LGT_CABIN1", "type": "light", "x": 210, "y": 95, "label": "Light" }
+      ],
+      "appliances": [
+        { "name": "Cabin 1 Light Fixture", "type": "light", "wattage": 120, "switch_id": "RELAY_LGT_CABIN1" },
+        { "name": "Cabin 1 AC Duct", "type": "ac", "wattage": 700, "switch_id": "RELAY_AC_CABIN1" }
+      ],
+      "debounce_seconds": 8,
+      "color": "#6366F1"
+    },
+    {
+      "id": "cabin_2",
+      "name": "Cabin 2",
+      "department": "Executive Suite",
+      "type": "camera_or_sensor",
+      "capacity": 2,
+      "camera_polygon": [
+        [0.35, 0.03],
+        [0.64, 0.03],
+        [0.64, 0.14],
+        [0.35, 0.14]
+      ],
+      "floor_polygon": [
+        [280, 30],
+        [520, 30],
+        [520, 135],
+        [280, 135]
+      ],
+      "fixtures": [
+        { "id": "LGT_CABIN2", "type": "light", "x": 400, "y": 95, "label": "Light" }
+      ],
+      "appliances": [
+        { "name": "Cabin 2 Light Fixture", "type": "light", "wattage": 120, "switch_id": "RELAY_LGT_CABIN2" },
+        { "name": "Cabin 2 AC Duct", "type": "ac", "wattage": 700, "switch_id": "RELAY_AC_CABIN2" }
+      ],
+      "debounce_seconds": 8,
+      "color": "#6366F1"
+    },
+    {
+      "id": "cabin_3",
+      "name": "Cabin 3",
+      "department": "Executive Suite",
+      "type": "camera_or_sensor",
+      "capacity": 2,
+      "camera_polygon": [
+        [0.66, 0.03],
+        [0.96, 0.03],
+        [0.96, 0.14],
+        [0.66, 0.14]
+      ],
+      "floor_polygon": [
+        [540, 30],
+        [760, 30],
+        [760, 135],
+        [540, 135]
+      ],
+      "fixtures": [
+        { "id": "LGT_CABIN3", "type": "light", "x": 620, "y": 95, "label": "Light" }
+      ],
+      "appliances": [
+        { "name": "Cabin 3 Light Fixture", "type": "light", "wattage": 120, "switch_id": "RELAY_LGT_CABIN3" },
+        { "name": "Cabin 3 AC Duct", "type": "ac", "wattage": 700, "switch_id": "RELAY_AC_CABIN3" }
+      ],
+      "debounce_seconds": 8,
+      "color": "#6366F1"
+    },
+    {
+      "id": "server_room",
+      "name": "Server Room",
+      "department": "IT Infrastructure (24/7 Precision)",
+      "type": "critical_infrastructure",
+      "capacity": 0,
+      "camera_polygon": [
+        [0.76, 0.17],
+        [0.96, 0.17],
+        [0.96, 0.28],
+        [0.76, 0.28]
+      ],
+      "floor_polygon": [
+        [590, 160],
+        [760, 160],
+        [760, 255],
+        [590, 255]
+      ],
+      "fixtures": [
+        { "id": "LGT_SRV", "type": "light", "x": 675, "y": 200, "label": "Rack Lights" },
+        { "id": "AC_SRV", "type": "hvac", "x": 675, "y": 230, "label": "Precision Cooling" }
+      ],
+      "appliances": [
+        { "name": "Server Rack Essential Lights", "type": "light", "wattage": 80, "switch_id": "RELAY_LGT_SRV" },
+        { "name": "Precision Cooling Inverter AC (24/7)", "type": "ac", "wattage": 2200, "switch_id": "RELAY_AC_SRV" }
+      ],
+      "debounce_seconds": 30,
+      "color": "#64748B"
     }
   ]
 }

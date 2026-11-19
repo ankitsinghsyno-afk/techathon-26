@@ -67,6 +67,7 @@ class ZoneManager:
                 camera_polygon=zd["camera_polygon"],
                 floor_polygon=zd["floor_polygon"],
                 appliances=appliances,
+                fixtures=zd.get("fixtures", []),
                 debounce_seconds=float(zd.get("debounce_seconds", 8.0)),
                 color=zd.get("color", "#3B82F6"),
                 last_occupied_timestamp=0.0
@@ -160,6 +161,7 @@ class ZoneManager:
                 "lights_state": z.lights_state,
                 "ac_state": z.ac_state,
                 "appliances": [a.model_dump() for a in z.appliances],
+                "fixtures": z.fixtures,
                 "color": z.color,
                 "camera_polygon": z.camera_polygon,
                 "floor_polygon": z.floor_polygon,
