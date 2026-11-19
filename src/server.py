@@ -139,11 +139,13 @@ def manual_override(req: OverrideRequest):
 
 @app.post("/api/source")
 def change_video_source(req: SourceRequest):
-    """Switches between synthetic simulation, webcam index (0), or RTSP feed."""
+    """Switches between synthetic simulation, webcam index (0), or RTSP/HTTP feed."""
     global pipeline
+    from src.video_stream import VideoStreamHandler
     pipeline.stream_handler.release()
-    pipeline.stream_handler = type(pipeline.stream_handler)(source=req.source)
-    return {"success": True, "source": req.source}
+    pipeline.stream_handler = VideoStreamHandler(source=req.source, width=800, height=600)
+    is_live = not pipeline.stream_handler.is_synthetic
+    return {"success": True, "source": req.source, "is_live": is_live}
 
 
 @app.get("/api/switches")

@@ -102,6 +102,8 @@ class VideoStreamHandler:
 
                 self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+                # Minimize network stream latency buffer (crucial for wireless iPhone / RTSP streams)
+                self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
                 # Test read a frame to confirm authorization
                 ret, _ = self.cap.read()
                 if not ret:

@@ -378,31 +378,46 @@
         <label class="block text-xs font-medium text-slate-300">Select Input Stream</label>
         <div class="space-y-2">
           <label class="flex items-center space-x-3 p-3 rounded-xl border border-slate-700 bg-slate-800/40 cursor-pointer hover:bg-slate-800 transition">
-            <input type="radio" name="video_source" value="synthetic" checked class="text-emerald-500 focus:ring-0">
+            <input type="radio" name="video_source" value="synthetic" onchange="toggleSourceInput(this.value)" checked class="text-emerald-500 focus:ring-0">
             <div>
               <div class="text-xs font-semibold text-white">Synthetic Office Simulation</div>
               <div class="text-[11px] text-slate-400">Interactive simulated avatars (Recommended for demo)</div>
             </div>
           </label>
           <label class="flex items-center space-x-3 p-3 rounded-xl border border-slate-700 bg-slate-800/40 cursor-pointer hover:bg-slate-800 transition">
-            <input type="radio" name="video_source" value="0" class="text-emerald-500 focus:ring-0">
+            <input type="radio" name="video_source" value="0" onchange="toggleSourceInput(this.value)" class="text-emerald-500 focus:ring-0">
             <div>
               <div class="text-xs font-semibold text-white">Live Laptop Webcam (0)</div>
               <div class="text-[11px] text-slate-400">Use built-in camera to test human detection in real life</div>
             </div>
           </label>
           <label class="flex items-center space-x-3 p-3 rounded-xl border border-slate-700 bg-slate-800/40 cursor-pointer hover:bg-slate-800 transition">
-            <input type="radio" name="video_source" value="rtsp" class="text-emerald-500 focus:ring-0">
+            <input type="radio" name="video_source" value="rtsp" onchange="toggleSourceInput(this.value)" class="text-emerald-500 focus:ring-0">
             <div>
-              <div class="text-xs font-semibold text-white">RTSP / IP Camera Stream</div>
-              <div class="text-[11px] text-slate-400">Connect to office CCTV URL (rtsp://...)</div>
+              <div class="text-xs font-semibold text-white flex items-center space-x-1.5">
+                <span>iPhone / Wireless IP Camera / RTSP</span>
+                <span class="text-[9px] bg-cyan-500/20 text-cyan-300 px-1.5 py-0.2 rounded border border-cyan-500/30">iPhone 8 Ready</span>
+              </div>
+              <div class="text-[11px] text-slate-400">Stream wirelessly over office Wi-Fi (HTTP or RTSP)</div>
             </div>
           </label>
         </div>
 
-        <div id="rtsp-input-container" class="hidden">
-          <label class="block text-[11px] text-slate-400 mb-1">RTSP Stream URL</label>
-          <input type="text" id="rtsp-url-input" placeholder="rtsp://admin:pass@192.168.1.50:554/stream1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500">
+        <div id="rtsp-input-container" class="hidden space-y-2 pt-2 border-t border-slate-800">
+          <label class="block text-[11px] text-slate-300 font-medium">iPhone / Network Stream URL</label>
+          <input type="text" id="rtsp-url-input" placeholder="http://192.168.1.XX:4747/video" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500 font-mono">
+
+          <div class="space-y-1 text-[10px] text-slate-400">
+            <span class="font-semibold text-slate-300">Quick URL formats for free iPhone apps:</span>
+            <div class="flex flex-wrap gap-1.5 pt-0.5">
+              <button type="button" onclick="fillStreamSample('http://192.168.1.15:4747/video')" class="bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-cyan-300 border border-slate-700 font-mono">DroidCam (:4747/video)</button>
+              <button type="button" onclick="fillStreamSample('http://192.168.1.15:8081/video')" class="bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-cyan-300 border border-slate-700 font-mono">IP Cam Lite (:8081/video)</button>
+              <button type="button" onclick="fillStreamSample('rtsp://192.168.1.15:8554/live')" class="bg-slate-800 hover:bg-slate-700 px-2 py-1 rounded text-cyan-300 border border-slate-700 font-mono">RTSP (:8554/live)</button>
+            </div>
+            <p class="text-[10px] text-slate-400 pt-1 leading-normal">
+              💡 Open the app on your iPhone 8 (connected to same Wi-Fi) and replace <code class="text-emerald-400">192.168.1.15</code> with the IP shown on your iPhone screen.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -783,6 +798,19 @@
       }
     }
 
+    function toggleSourceInput(val) {
+      const container = document.getElementById('rtsp-input-container');
+      if (val === 'rtsp') {
+        container.classList.remove('hidden');
+      } else {
+        container.classList.add('hidden');
+      }
+    }
+
+    function fillStreamSample(url) {
+      document.getElementById('rtsp-url-input').value = url;
+    }
+
     // Modal logic
     function openSourceModal() {
       document.getElementById('sourceModal').classList.remove('hidden');
@@ -799,18 +827,23 @@
       if (selected === 'rtsp') {
         finalSource = document.getElementById('rtsp-url-input').value.trim();
         if (!finalSource) {
-          alert('Please enter an RTSP URL');
+          alert('Please enter your iPhone stream URL (e.g. http://192.168.1.XX:4747/video)');
           return;
         }
       }
       closeSourceModal();
       try {
-        await fetch('/api/source', {
+        const res = await fetch('/api/source', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ source: finalSource })
         });
-        addAuditLog(`Camera stream changed to: ${finalSource}`);
+        const data = await res.json();
+        if (data.is_live === false) {
+          addAuditLog(`⚠️ Warning: Could not connect to '${finalSource}'. Reverted to simulation.`);
+        } else {
+          addAuditLog(`Camera stream changed to: ${finalSource}`);
+        }
       } catch (e) {
         console.error(e);
       }
