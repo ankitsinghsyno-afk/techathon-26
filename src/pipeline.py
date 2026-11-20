@@ -104,6 +104,7 @@ class FloorEnergyPipeline:
             floor_name=self.zone_manager.floor_name,
             total_occupancy=len(detections),
             zones=self.zone_manager.get_summary(),
+            switches=dict(self.switch_controller.relay_states),
             detections=detections,
             energy=energy_metrics
         )

@@ -38,6 +38,11 @@ class OverrideRequest(BaseModel):
     lights_state: bool
 
 
+class SensorTriggerRequest(BaseModel):
+    zone_id: str
+    motion: bool = True
+
+
 class SourceRequest(BaseModel):
     source: str  # "synthetic", "0", "1", or RTSP url
 
@@ -159,6 +164,15 @@ def get_switches():
     return pipeline.switch_controller.get_status()
 
 
+@app.post("/api/sensor_trigger")
+def trigger_sensor(req: SensorTriggerRequest):
+    """Handles external PIR motion sensor triggers from Raspberry Pi."""
+    if req.zone_id not in pipeline.zone_manager.zones:
+        raise HTTPException(status_code=404, detail="Zone not found")
+    pipeline.zone_manager.trigger_sensor(req.zone_id, req.motion)
+    return {"success": True, "zone_id": req.zone_id, "motion": req.motion}
+
+
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
@@ -171,6 +185,11 @@ async def websocket_endpoint(websocket: WebSocket):
                 cmd = json.loads(data)
                 if cmd.get("action") == "scenario":
                     pipeline.switch_scenario(cmd.get("value"))
+                elif cmd.get("action") == "sensor_trigger":
+                    zone_id = cmd.get("zone_id")
+                    motion = cmd.get("motion", True)
+                    if zone_id and zone_id in pipeline.zone_manager.zones:
+                        pipeline.zone_manager.trigger_sensor(zone_id, motion)
             except Exception:
                 pass
     except WebSocketDisconnect:

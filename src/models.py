@@ -60,5 +60,6 @@ class FloorTelemetry(BaseModel):
     floor_name: str
     total_occupancy: int
     zones: Dict[str, Dict[str, Any]]
+    switches: Dict[str, bool] = Field(default_factory=dict)
     detections: List[PersonDetection]
     energy: EnergyMetrics

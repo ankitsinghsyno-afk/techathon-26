@@ -150,6 +150,36 @@ class ZoneManager:
 
         return events
 
+    def trigger_sensor(self, zone_id: str, motion: bool = True) -> bool:
+        """
+        Handles digital PIR/IoT sensor trigger (e.g. from Raspberry Pi GPIO).
+        Keeps the zone active and refreshes its debounce timer.
+        """
+        if zone_id not in self.zones:
+            return False
+
+        zone = self.zones[zone_id]
+        now = time.time()
+        if motion:
+            zone.last_occupied_timestamp = now
+            zone.is_occupied = True
+            zone.current_occupancy = max(zone.current_occupancy, 1)
+            zone.lights_state = True
+            zone.ac_state = True
+        else:
+            zone.is_occupied = False
+            zone.current_occupancy = 0
+            zone.lights_state = False
+            zone.ac_state = False
+
+        for app in zone.appliances:
+            if app.type in ("light", "display", "socket"):
+                app.is_active = zone.lights_state
+            elif app.type == "ac":
+                app.is_active = zone.ac_state
+
+        return True
+
     def get_summary(self) -> Dict[str, Any]:
         return {
             zid: {
