@@ -66,6 +66,8 @@ class PiRelayClient:
         server_url: str,
         active_low_relay: bool = True,
         use_mock: bool = False,
+        no_resistor_pwm: bool = False,
+        pwm_duty: int = 15,
         led_pins: Optional[Dict[str, int]] = None,
         relay_pins: Optional[Dict[str, int]] = None,
         sensor_pins: Optional[Dict[str, int]] = None,
@@ -73,6 +75,8 @@ class PiRelayClient:
         self.server_url = server_url.rstrip("/")
         self.active_low_relay = active_low_relay
         self.is_mock = use_mock or not HAS_GPIO
+        self.no_resistor_pwm = no_resistor_pwm
+        self.pwm_duty = max(1, min(pwm_duty, 25))  # Safe duty cycle cap (max 25%)
         self.led_pins = led_pins or DEFAULT_BREADBOARD_LEDS
         self.relay_pins = relay_pins or DEFAULT_RELAY_PINS
         self.sensor_pins = sensor_pins or DEFAULT_SENSOR_PINS
@@ -80,6 +84,7 @@ class PiRelayClient:
         # Tracks current hardware output states
         self.current_led_states: Dict[str, bool] = {}
         self.current_relay_states: Dict[str, bool] = {}
+        self.pwm_instances: Dict[str, Any] = {}
         self.ws: Optional[Any] = None
         self.is_running = True
 
@@ -102,9 +107,16 @@ class PiRelayClient:
         # 1. Setup Breadboard LEDs (Active HIGH)
         for zid, pin in self.led_pins.items():
             GPIO.setup(pin, GPIO.OUT)
-            GPIO.output(pin, GPIO.LOW)  # OFF
+            if self.no_resistor_pwm:
+                # 1000 Hz PWM restricts average current safely to ~1-2 mA without resistors
+                pwm = GPIO.PWM(pin, 1000)
+                pwm.start(0)
+                self.pwm_instances[zid] = pwm
+            else:
+                GPIO.output(pin, GPIO.LOW)  # OFF
             self.current_led_states[zid] = False
-            print(f"  -> Breadboard LED: {zid:14s} on BCM GPIO {pin} (Pin {self._get_phys_pin(pin)})")
+            mode_str = f"PWM {self.pwm_duty}% Current-Limited" if self.no_resistor_pwm else "Standard 3.3V"
+            print(f"  -> Breadboard LED: {zid:14s} on BCM GPIO {pin} (Pin {self._get_phys_pin(pin)}) [{mode_str}]")
 
         # 2. Setup 2-Channel Relay Module (Active LOW)
         for sw_id, pin in self.relay_pins.items():
@@ -141,7 +153,11 @@ class PiRelayClient:
         print(f"[{time.strftime('%H:%M:%S')}] {symbol} Zone '{zone_id}' (GPIO {pin}) -> {'ON' if state else 'OFF'}")
 
         if not self.is_mock and pin is not None:
-            GPIO.output(pin, GPIO.HIGH if state else GPIO.LOW)
+            if self.no_resistor_pwm and zone_id in self.pwm_instances:
+                duty = self.pwm_duty if state else 0
+                self.pwm_instances[zone_id].ChangeDutyCycle(duty)
+            else:
+                GPIO.output(pin, GPIO.HIGH if state else GPIO.LOW)
 
     def set_relay(self, switch_id: str, state: bool):
         """Sets relay hardware pin to ON (True) or OFF (False)."""
@@ -292,6 +308,11 @@ class PiRelayClient:
         print("[CLEANUP] Turning off all physical LEDs and relays...")
         for zid in self.led_pins:
             self.set_led(zid, False)
+        for pwm in self.pwm_instances.values():
+            try:
+                pwm.stop()
+            except Exception:
+                pass
         for sw_id in self.relay_pins:
             self.set_relay(sw_id, False)
         if not self.is_mock and HAS_GPIO:
@@ -304,12 +325,16 @@ def main():
     parser.add_argument("--server", type=str, default="http://localhost:8000", help="Central Mac server URL (e.g. http://192.168.1.100:8000)")
     parser.add_argument("--active-high-relay", action="store_true", help="Set if relay board is Active-High (default is Active-Low)")
     parser.add_argument("--mock", action="store_true", help="Force mock/simulation mode without GPIO")
+    parser.add_argument("--no-resistor-pwm", action="store_true", help="Enables 1000Hz PWM current limiting (15%% duty cycle) for bare LEDs without resistors")
+    parser.add_argument("--pwm-duty", type=int, default=15, help="PWM duty cycle percentage (1-25) when --no-resistor-pwm is enabled")
     args = parser.parse_args()
 
     client = PiRelayClient(
         server_url=args.server,
         active_low_relay=not args.active_high_relay,
-        use_mock=args.mock
+        use_mock=args.mock,
+        no_resistor_pwm=args.no_resistor_pwm,
+        pwm_duty=args.pwm_duty
     )
     client.run()
 
