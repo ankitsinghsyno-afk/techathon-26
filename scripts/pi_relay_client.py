@@ -33,31 +33,30 @@ except (ImportError, RuntimeError):
     HAS_GPIO = False
 
 
-# BCM GPIO Pin Configuration (Calibrated for standard 8-channel / 4-channel relay boards)
-DEFAULT_RELAY_PINS = {
-    # Workstation Bays (6th Floor Map)
-    "RELAY_LGT_BAY_1": 17,  # Physical Pin 11
-    "RELAY_AC_BAY_1": 27,   # Physical Pin 13
-    "RELAY_LGT_BAY_2": 22,  # Physical Pin 15
-    "RELAY_AC_BAY_2": 23,   # Physical Pin 16
-    "RELAY_LGT_BAY_3": 24,  # Physical Pin 18
-    "RELAY_AC_BAY_3": 25,   # Physical Pin 22
-    "RELAY_LGT_BAY_4": 5,    # Physical Pin 29
-    "RELAY_AC_BAY_4": 6,    # Physical Pin 31
-
-    # Shared & Private Facilities
-    "RELAY_LGT_CONF": 12,   # Physical Pin 32 (Conference Downlights)
-    "RELAY_AC_CONF": 13,    # Physical Pin 33 (Conference AC)
-    "RELAY_LGT_MGR": 16,    # Physical Pin 36 (Manager Cabin Light)
-    "RELAY_AC_MGR": 26,     # Physical Pin 37 (Manager Cabin AC)
-    "RELAY_LGT_SRV": 19,    # Physical Pin 35 (Server Room Light)
-    "RELAY_AC_SRV": 20,     # Physical Pin 38 (Server Precision Cooling)
+# BCM GPIO Pin Configuration calibrated for Breadboard LED Grid + 2-Channel Relay + Magnetic Door
+# 1. Breadboard Floor Light LEDs (Active HIGH: HIGH = ON, LOW = OFF)
+DEFAULT_BREADBOARD_LEDS = {
+    "bay_1": 17,          # Physical Pin 11 -> Bay 1 LED
+    "bay_2": 22,          # Physical Pin 15 -> Bay 2 LED
+    "bay_3": 24,          # Physical Pin 18 -> Bay 3 LED
+    "bay_4": 5,           # Physical Pin 29 -> Bay 4 LED
+    "conf_room": 12,      # Physical Pin 32 -> Conference Room LED
+    "cabin_1": 27,        # Physical Pin 13 -> Executive Cabin 1 LED
+    "manager_cabin": 16,  # Physical Pin 36 -> Manager Cabin LED
+    "server_room": 20,    # Physical Pin 38 -> Server Room LED (Always ON)
 }
 
-# Digital PIR Motion Sensors for privacy/no-camera zones
-DEFAULT_PIR_PINS = {
-    "conf_room": 21,        # Physical Pin 40 (Conference Room PIR Input)
-    "manager_cabin": 4,     # Physical Pin 7  (Manager Cabin PIR Input)
+# 2. 2-Channel Relay Module (Active LOW: LOW = ON, HIGH = OFF)
+# Mapped to Bay 1 & Bay 2 for audible relay click demo
+DEFAULT_RELAY_PINS = {
+    "RELAY_LGT_BAY_1": 23,  # Physical Pin 16 (IN1 on 2-ch relay)
+    "RELAY_LGT_BAY_2": 25,  # Physical Pin 22 (IN2 on 2-ch relay)
+}
+
+# 3. Sensors: Magnetic Door Switch (White contact sensor) & PIR Motion
+DEFAULT_SENSOR_PINS = {
+    "conf_room": 21,        # Physical Pin 40 -> White Magnetic Door Switch (or PIR)
+    "manager_cabin": 4,     # Physical Pin 7  -> PIR / Motion Sensor
 }
 
 
@@ -65,18 +64,21 @@ class PiRelayClient:
     def __init__(
         self,
         server_url: str,
-        active_low: bool = True,
+        active_low_relay: bool = True,
         use_mock: bool = False,
+        led_pins: Optional[Dict[str, int]] = None,
         relay_pins: Optional[Dict[str, int]] = None,
-        pir_pins: Optional[Dict[str, int]] = None,
+        sensor_pins: Optional[Dict[str, int]] = None,
     ):
         self.server_url = server_url.rstrip("/")
-        self.active_low = active_low
+        self.active_low_relay = active_low_relay
         self.is_mock = use_mock or not HAS_GPIO
+        self.led_pins = led_pins or DEFAULT_BREADBOARD_LEDS
         self.relay_pins = relay_pins or DEFAULT_RELAY_PINS
-        self.pir_pins = pir_pins or DEFAULT_PIR_PINS
+        self.sensor_pins = sensor_pins or DEFAULT_SENSOR_PINS
 
-        # Tracks current hardware pin output states
+        # Tracks current hardware output states
+        self.current_led_states: Dict[str, bool] = {}
         self.current_relay_states: Dict[str, bool] = {}
         self.ws: Optional[Any] = None
         self.is_running = True
@@ -87,6 +89,8 @@ class PiRelayClient:
         """Initializes GPIO pins or prints mock status."""
         if self.is_mock:
             print("[INFO] Running in MOCK/SIMULATION Mode (No physical GPIO calls).")
+            for zid in self.led_pins:
+                self.current_led_states[zid] = False
             for sw_id in self.relay_pins:
                 self.current_relay_states[sw_id] = False
             return
@@ -95,19 +99,49 @@ class PiRelayClient:
         GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
 
-        # Setup Relay Outputs
+        # 1. Setup Breadboard LEDs (Active HIGH)
+        for zid, pin in self.led_pins.items():
+            GPIO.setup(pin, GPIO.OUT)
+            GPIO.output(pin, GPIO.LOW)  # OFF
+            self.current_led_states[zid] = False
+            print(f"  -> Breadboard LED: {zid:14s} on BCM GPIO {pin} (Pin {self._get_phys_pin(pin)})")
+
+        # 2. Setup 2-Channel Relay Module (Active LOW)
         for sw_id, pin in self.relay_pins.items():
             GPIO.setup(pin, GPIO.OUT)
-            # Default OFF: For Active-Low relay, OFF = HIGH. For Active-High, OFF = LOW.
-            initial_val = GPIO.HIGH if self.active_low else GPIO.LOW
-            GPIO.output(pin, initial_val)
+            initial_val = GPIO.HIGH if self.active_low_relay else GPIO.LOW
+            GPIO.output(pin, initial_val)  # OFF
             self.current_relay_states[sw_id] = False
-            print(f"  -> Relay Output Configured: {sw_id} on BCM GPIO {pin}")
+            print(f"  -> Physical Relay: {sw_id:14s} on BCM GPIO {pin} (Pin {self._get_phys_pin(pin)})")
 
-        # Setup PIR Sensor Inputs
-        for zone_id, pin in self.pir_pins.items():
-            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
-            print(f"  -> PIR Sensor Input Configured: {zone_id} on BCM GPIO {pin}")
+        # 3. Setup Sensors (Pull-up for door reed switch, pull-down for PIR)
+        for zone_id, pin in self.sensor_pins.items():
+            # Pull-up for magnetic door contact switch (Pin pulls LOW when magnet closes switch)
+            GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+            print(f"  -> Sensor Input:  {zone_id:14s} on BCM GPIO {pin} (Pin {self._get_phys_pin(pin)})")
+
+    def _get_phys_pin(self, bcm: int) -> str:
+        bcm_to_phys = {
+            2: "3", 3: "5", 4: "7", 14: "8", 15: "10", 17: "11", 18: "12",
+            27: "13", 22: "15", 23: "16", 24: "18", 10: "19", 9: "21", 25: "22",
+            11: "23", 8: "24", 7: "26", 5: "29", 6: "31", 12: "32", 13: "33",
+            19: "35", 16: "36", 26: "37", 20: "38", 21: "40"
+        }
+        return bcm_to_phys.get(bcm, "?")
+
+    def set_led(self, zone_id: str, state: bool):
+        """Sets breadboard LED pin to ON (True) or OFF (False)."""
+        prev = self.current_led_states.get(zone_id, None)
+        if prev == state:
+            return
+
+        self.current_led_states[zone_id] = state
+        pin = self.led_pins.get(zone_id)
+        symbol = "💡 [LED ON] " if state else "⚫ [LED OFF]"
+        print(f"[{time.strftime('%H:%M:%S')}] {symbol} Zone '{zone_id}' (GPIO {pin}) -> {'ON' if state else 'OFF'}")
+
+        if not self.is_mock and pin is not None:
+            GPIO.output(pin, GPIO.HIGH if state else GPIO.LOW)
 
     def set_relay(self, switch_id: str, state: bool):
         """Sets relay hardware pin to ON (True) or OFF (False)."""
@@ -117,14 +151,11 @@ class PiRelayClient:
 
         self.current_relay_states[switch_id] = state
         pin = self.relay_pins.get(switch_id)
-
-        symbol = "💡 [ON] " if state else "⚫ [OFF]"
+        symbol = "⚡ [RELAY ON] " if state else "🔌 [RELAY OFF]"
         print(f"[{time.strftime('%H:%M:%S')}] {symbol} Relay '{switch_id}' (GPIO {pin}) -> {'ON' if state else 'OFF'}")
 
         if not self.is_mock and pin is not None:
-            # Active-low: ON = LOW, OFF = HIGH
-            # Active-high: ON = HIGH, OFF = LOW
-            if self.active_low:
+            if self.active_low_relay:
                 gpio_val = GPIO.LOW if state else GPIO.HIGH
             else:
                 gpio_val = GPIO.HIGH if state else GPIO.LOW
@@ -132,45 +163,48 @@ class PiRelayClient:
 
     def handle_telemetry(self, data: Dict[str, Any]):
         """Processes telemetry payload from central Mac server."""
-        # 1. Update from direct switch states if provided
-        switches = data.get("switches", {})
-        if switches:
-            for sw_id, state in switches.items():
-                if sw_id in self.relay_pins:
-                    self.set_relay(sw_id, bool(state))
-            return
-
-        # 2. Or derive from zone appliances
         zones = data.get("zones", {})
         for zid, zdata in zones.items():
-            lights_on = zdata.get("lights_state", False)
-            ac_on = zdata.get("ac_state", False)
-            for app in zdata.get("appliances", []):
-                sw_id = app.get("switch_id")
-                app_type = app.get("type")
-                if not sw_id or sw_id not in self.relay_pins:
-                    continue
-                if app_type in ("light", "display", "socket"):
-                    self.set_relay(sw_id, lights_on)
-                elif app_type == "ac":
-                    self.set_relay(sw_id, ac_on)
+            lights_on = bool(zdata.get("lights_state", False))
 
-    def start_pir_monitor(self):
-        """Background thread monitoring PIR motion sensor pins."""
+            # 1. Update breadboard LED for this zone
+            if zid in self.led_pins:
+                self.set_led(zid, lights_on)
+
+            # 2. Update paired physical relay for Bay 1 & Bay 2
+            if zid == "bay_1" and "RELAY_LGT_BAY_1" in self.relay_pins:
+                self.set_relay("RELAY_LGT_BAY_1", lights_on)
+            elif zid == "bay_2" and "RELAY_LGT_BAY_2" in self.relay_pins:
+                self.set_relay("RELAY_LGT_BAY_2", lights_on)
+
+        # Also support direct switches payload
+        switches = data.get("switches", {})
+        for sw_id, state in switches.items():
+            if sw_id in self.relay_pins:
+                self.set_relay(sw_id, bool(state))
+
+    def start_sensor_monitor(self):
+        """Background thread monitoring magnetic door switch and PIR motion sensor pins."""
         if self.is_mock:
             return
 
         def monitor_loop():
-            last_states = {z: False for z in self.pir_pins}
+            last_states = {z: None for z in self.sensor_pins}
             while self.is_running:
-                for zone_id, pin in self.pir_pins.items():
-                    current = bool(GPIO.input(pin))
-                    if current != last_states[zone_id]:
-                        last_states[zone_id] = current
-                        if current:
-                            print(f"[PIR MOTION] Sensor triggered in {zone_id}! Reporting to server...")
+                for zone_id, pin in self.sensor_pins.items():
+                    # For pull-up door switch: 1 = Open/Triggered, 0 = Closed/Idle
+                    raw_val = GPIO.input(pin)
+                    # Trigger condition:
+                    # Door sensor: High (1) means door opened
+                    # PIR sensor: High (1) means motion detected
+                    is_triggered = (raw_val == GPIO.HIGH)
+
+                    if last_states[zone_id] != is_triggered:
+                        last_states[zone_id] = is_triggered
+                        if is_triggered:
+                            print(f"[SENSOR EVENT] Presence/Door triggered in '{zone_id}'! Notifying central Mac...")
                             self.send_sensor_trigger(zone_id, motion=True)
-                time.sleep(0.1)
+                time.sleep(0.15)
 
         t = threading.Thread(target=monitor_loop, daemon=True)
         t.start()
@@ -202,11 +236,11 @@ class PiRelayClient:
         print(f"=======================================================")
         print(f"  Smart Office Edge Actuator - Raspberry Pi Client")
         print(f"  Target Central Server: {ws_url}")
-        print(f"  Hardware Relay Mode:  {'ACTIVE-LOW' if self.active_low else 'ACTIVE-HIGH'}")
+        print(f"  Hardware Relay Mode:  {'ACTIVE-LOW' if self.active_low_relay else 'ACTIVE-HIGH'}")
         print(f"  Active GPIO Backend:  {'MOCK' if self.is_mock else 'RPi.GPIO (Physical)'}")
         print(f"=======================================================")
 
-        self.start_pir_monitor()
+        self.start_sensor_monitor()
 
         while self.is_running:
             try:
@@ -254,8 +288,10 @@ class PiRelayClient:
         self.cleanup()
 
     def cleanup(self):
-        """Safely turns off all relays and cleans up GPIO pins."""
-        print("[CLEANUP] Turning off all physical relays...")
+        """Safely turns off all relays, LEDs, and cleans up GPIO pins."""
+        print("[CLEANUP] Turning off all physical LEDs and relays...")
+        for zid in self.led_pins:
+            self.set_led(zid, False)
         for sw_id in self.relay_pins:
             self.set_relay(sw_id, False)
         if not self.is_mock and HAS_GPIO:
@@ -266,13 +302,13 @@ class PiRelayClient:
 def main():
     parser = argparse.ArgumentParser(description="Raspberry Pi Edge Actuator for Smart Office Energy")
     parser.add_argument("--server", type=str, default="http://localhost:8000", help="Central Mac server URL (e.g. http://192.168.1.100:8000)")
-    parser.add_argument("--active-high", action="store_true", help="Set if relay board is Active-High (default is Active-Low)")
+    parser.add_argument("--active-high-relay", action="store_true", help="Set if relay board is Active-High (default is Active-Low)")
     parser.add_argument("--mock", action="store_true", help="Force mock/simulation mode without GPIO")
     args = parser.parse_args()
 
     client = PiRelayClient(
         server_url=args.server,
-        active_low=not args.active_high,
+        active_low_relay=not args.active_high_relay,
         use_mock=args.mock
     )
     client.run()

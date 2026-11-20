@@ -1,5 +1,5 @@
 import unittest
-from scripts.pi_relay_client import PiRelayClient, DEFAULT_RELAY_PINS
+from scripts.pi_relay_client import PiRelayClient
 
 
 class TestPiRelayClient(unittest.TestCase):
@@ -9,46 +9,44 @@ class TestPiRelayClient(unittest.TestCase):
     def tearDown(self):
         self.client.cleanup()
 
-    def test_initial_relay_states(self):
+    def test_initial_states(self):
+        for zid in self.client.led_pins:
+            self.assertFalse(self.client.current_led_states[zid])
         for sw_id in self.client.relay_pins:
             self.assertFalse(self.client.current_relay_states[sw_id])
 
-    def test_set_relay(self):
+    def test_set_led_and_relay(self):
+        self.client.set_led("bay_1", True)
+        self.assertTrue(self.client.current_led_states["bay_1"])
+        self.client.set_led("bay_1", False)
+        self.assertFalse(self.client.current_led_states["bay_1"])
+
         self.client.set_relay("RELAY_LGT_BAY_1", True)
         self.assertTrue(self.client.current_relay_states["RELAY_LGT_BAY_1"])
-
         self.client.set_relay("RELAY_LGT_BAY_1", False)
         self.assertFalse(self.client.current_relay_states["RELAY_LGT_BAY_1"])
-
-    def test_handle_telemetry_switches(self):
-        payload = {
-            "switches": {
-                "RELAY_LGT_BAY_1": True,
-                "RELAY_AC_BAY_1": True,
-                "RELAY_LGT_BAY_2": False
-            }
-        }
-        self.client.handle_telemetry(payload)
-        self.assertTrue(self.client.current_relay_states["RELAY_LGT_BAY_1"])
-        self.assertTrue(self.client.current_relay_states["RELAY_AC_BAY_1"])
-        self.assertFalse(self.client.current_relay_states["RELAY_LGT_BAY_2"])
 
     def test_handle_telemetry_zones(self):
         payload = {
             "zones": {
-                "bay_3": {
+                "bay_1": {
                     "lights_state": True,
-                    "ac_state": False,
-                    "appliances": [
-                        {"switch_id": "RELAY_LGT_BAY_3", "type": "light"},
-                        {"switch_id": "RELAY_AC_BAY_3", "type": "ac"}
-                    ]
+                    "ac_state": True
+                },
+                "bay_2": {
+                    "lights_state": False,
+                    "ac_state": False
                 }
             }
         }
         self.client.handle_telemetry(payload)
-        self.assertTrue(self.client.current_relay_states["RELAY_LGT_BAY_3"])
-        self.assertFalse(self.client.current_relay_states["RELAY_AC_BAY_3"])
+        # Bay 1 LED and Relay should be ON
+        self.assertTrue(self.client.current_led_states["bay_1"])
+        self.assertTrue(self.client.current_relay_states["RELAY_LGT_BAY_1"])
+
+        # Bay 2 LED and Relay should be OFF
+        self.assertFalse(self.client.current_led_states["bay_2"])
+        self.assertFalse(self.client.current_relay_states["RELAY_LGT_BAY_2"])
 
 
 if __name__ == "__main__":
