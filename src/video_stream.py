@@ -124,8 +124,9 @@ class VideoStreamHandler:
                     self._init_source()
                     return
 
-                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.width)
-                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
+                self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+                self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+                self.cap.set(cv2.CAP_PROP_FPS, 30)
                 self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
                 ret, frame = self.cap.read()

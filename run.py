@@ -11,6 +11,11 @@ import uvicorn
 # Ensure project root is in sys.path
 sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
+# Optimize multi-core CPU inference for Raspberry Pi 4 (Cortex-A72 4-core)
+os.environ.setdefault("OMP_NUM_THREADS", "4")
+os.environ.setdefault("OPENBLAS_NUM_THREADS", "4")
+os.environ.setdefault("MKL_NUM_THREADS", "4")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Smart Office AI Energy Management System")

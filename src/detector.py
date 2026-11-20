@@ -9,7 +9,7 @@ from src.models import PersonDetection
 
 
 class HumanDetector:
-    def __init__(self, model_name: str = "yolov8n.pt", confidence_threshold: float = 0.40, imgsz: int = 384):
+    def __init__(self, model_name: str = "yolov8n.pt", confidence_threshold: float = 0.40, imgsz: int = 320):
         self.model_name = model_name
         self.confidence_threshold = confidence_threshold
         self.imgsz = imgsz
