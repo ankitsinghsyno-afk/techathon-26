@@ -11,6 +11,7 @@ import os
 import time
 import math
 import random
+import threading
 from typing import Optional, Tuple, List, Dict, Any
 
 # Ensure macOS AVFoundation authorization warning does not freeze secondary threads
@@ -70,6 +71,12 @@ class VideoStreamHandler:
         self.cap = None
         self.is_synthetic = (source.lower() == "synthetic")
 
+        # Threaded capture components to prevent network buffer lag
+        self.thread_running = False
+        self.capture_thread: Optional[threading.Thread] = None
+        self.latest_live_frame: Optional[np.ndarray] = None
+        self.frame_lock = threading.Lock()
+
         # Floor Plan Waypoints matching the 6th floor layout
         self.waypoints = {
             "bay_1": (300.0, 210.0),
@@ -86,6 +93,10 @@ class VideoStreamHandler:
         self._init_source()
 
     def _init_source(self):
+        self.thread_running = False
+        if self.capture_thread and self.capture_thread.is_alive():
+            self.capture_thread.join(timeout=1.0)
+
         if self.is_synthetic:
             # Default: Team 1 working in Bay 1 (solving user's single team working statement)
             self.synthetic_people = [
@@ -117,35 +128,60 @@ class VideoStreamHandler:
                 self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.height)
                 self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 1)
 
-                ret, _ = self.cap.read()
+                ret, frame = self.cap.read()
                 if not ret:
                     print(f"⚠️ Notice: Camera '{self.source}' opened but read failed. Reverting to simulation.")
                     self.cap.release()
                     self.cap = None
                     self.is_synthetic = True
                     self._init_source()
+                    return
+
+                # Store initial frame and launch dedicated background capture thread
+                with self.frame_lock:
+                    self.latest_live_frame = cv2.resize(frame, (self.width, self.height))
+
+                self.thread_running = True
+                self.capture_thread = threading.Thread(target=self._capture_worker, daemon=True)
+                self.capture_thread.start()
+                print(f"✅ Fast Threaded Video Stream active for {self.source}")
             except Exception as e:
                 print(f"Error opening camera source '{self.source}': {e}. Reverting to simulation.")
                 self.is_synthetic = True
                 self.cap = None
                 self._init_source()
 
+    def _capture_worker(self):
+        """
+        Continuously drains the camera socket buffer in the background.
+        Ensures zero accumulated lag for wireless iPhone / RTSP streams on Raspberry Pi.
+        """
+        while self.thread_running and self.cap is not None and self.cap.isOpened():
+            try:
+                ret, frame = self.cap.read()
+                if ret and frame is not None:
+                    # Pre-resize in background thread to unburden main inference loop
+                    resized = cv2.resize(frame, (self.width, self.height))
+                    with self.frame_lock:
+                        self.latest_live_frame = resized
+                else:
+                    time.sleep(0.01)
+            except Exception:
+                time.sleep(0.02)
+
     def read_frame(self) -> Tuple[bool, Optional[np.ndarray], List[Dict[str, Any]]]:
-        if self.is_synthetic or self.cap is None or not self.cap.isOpened():
+        if self.is_synthetic:
             frame, gt_boxes = self._generate_synthetic_frame()
             return True, frame, gt_boxes
 
-        ret, frame = self.cap.read()
-        if not ret:
-            if isinstance(self.source, str) and not self.source.isdigit():
-                self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-                ret, frame = self.cap.read()
-            if not ret:
-                frame, gt_boxes = self._generate_synthetic_frame()
-                return True, frame, gt_boxes
+        if self.thread_running:
+            with self.frame_lock:
+                if self.latest_live_frame is not None:
+                    return True, self.latest_live_frame.copy(), []
 
-        frame = cv2.resize(frame, (self.width, self.height))
-        return True, frame, []
+        # Fallback if frame not ready yet
+        frame, gt_boxes = self._generate_synthetic_frame()
+        return True, frame, gt_boxes
 
     def _generate_synthetic_frame(self) -> Tuple[np.ndarray, List[Dict[str, Any]]]:
         """
@@ -320,5 +356,8 @@ class VideoStreamHandler:
             self.synthetic_people = []
 
     def release(self):
+        self.thread_running = False
+        if self.capture_thread and self.capture_thread.is_alive():
+            self.capture_thread.join(timeout=1.0)
         if self.cap is not None and self.cap.isOpened():
             self.cap.release()

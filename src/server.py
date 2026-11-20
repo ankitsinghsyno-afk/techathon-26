@@ -68,8 +68,8 @@ async def pipeline_background_worker():
                         connected_websockets.remove(ws)
         except Exception as e:
             print(f"Error in pipeline loop: {e}")
-        # Run at ~15-20 FPS
-        await asyncio.sleep(0.06)
+        # Dynamic low-latency loop
+        await asyncio.sleep(0.015)
 
 
 @app.get("/api/stream")
@@ -84,7 +84,7 @@ def video_feed():
                     b"--frame\r\n"
                     b"Content-Type: image/jpeg\r\n\r\n" + pipeline.latest_frame_jpeg + b"\r\n"
                 )
-            time.sleep(0.06)
+            time.sleep(0.025)
 
     return StreamingResponse(
         iter_frames(),

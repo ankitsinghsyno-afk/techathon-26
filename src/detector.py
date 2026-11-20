@@ -9,17 +9,25 @@ from src.models import PersonDetection
 
 
 class HumanDetector:
-    def __init__(self, model_name: str = "yolov8n.pt", confidence_threshold: float = 0.45):
+    def __init__(self, model_name: str = "yolov8n.pt", confidence_threshold: float = 0.40, imgsz: int = 384):
         self.model_name = model_name
         self.confidence_threshold = confidence_threshold
+        self.imgsz = imgsz
         self.model = None
         self._load_model()
 
     def _load_model(self):
         try:
+            import os
             from ultralytics import YOLO
-            print(f"Loading YOLO model: {self.model_name}...")
-            self.model = YOLO(self.model_name)
+            model_target = self.model_name
+            # If NCNN model directory exists on Raspberry Pi, use it automatically for 3x speed
+            if os.path.exists("yolov8n_ncnn_model"):
+                model_target = "yolov8n_ncnn_model"
+                print(f"🚀 Detected & loading accelerated NCNN model: {model_target}")
+            else:
+                print(f"Loading YOLO model: {model_target}...")
+            self.model = YOLO(model_target)
             print("YOLO model loaded successfully.")
         except Exception as e:
             print(f"Notice: Could not initialize YOLO directly ({e}). Fallback detector will be used if needed.")
@@ -35,8 +43,14 @@ class HumanDetector:
             return detections
 
         h, w = frame.shape[:2]
-        # Class 0 in COCO is 'person'
-        results = self.model(frame, classes=[0], conf=self.confidence_threshold, verbose=False)
+        # Class 0 in COCO is 'person'. imgsz=384 optimizes speed on Raspberry Pi / ARM CPU
+        results = self.model(
+            frame,
+            classes=[0],
+            conf=self.confidence_threshold,
+            imgsz=self.imgsz,
+            verbose=False
+        )
 
         person_idx = 1
         for result in results:
