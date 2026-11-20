@@ -154,18 +154,24 @@ class VideoStreamHandler:
     def _capture_worker(self):
         """
         Continuously drains the camera socket buffer in the background.
-        Ensures zero accumulated lag for wireless iPhone / RTSP streams on Raspberry Pi.
+        Auto-downscales high-res iPhone streams (e.g. 1080p -> 640px) directly in code.
+        Ensures zero accumulated lag and smooth high-FPS processing on Raspberry Pi.
         """
         while self.thread_running and self.cap is not None and self.cap.isOpened():
             try:
                 ret, frame = self.cap.read()
                 if ret and frame is not None:
-                    # Pre-resize in background thread to unburden main inference loop
-                    resized = cv2.resize(frame, (self.width, self.height))
+                    # Auto-downscale high-res iPhone feeds (e.g. 1920x1080 -> 640x360) directly in code
+                    h, w = frame.shape[:2]
+                    if w > 640:
+                        target_w = 640
+                        target_h = int(h * (640.0 / w))
+                        frame = cv2.resize(frame, (target_w, target_h), interpolation=cv2.INTER_NEAREST)
+
                     with self.frame_lock:
-                        self.latest_live_frame = resized
+                        self.latest_live_frame = frame
                 else:
-                    time.sleep(0.01)
+                    time.sleep(0.005)
             except Exception:
                 time.sleep(0.02)
 
